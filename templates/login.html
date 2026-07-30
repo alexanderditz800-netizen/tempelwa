@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login · Tempel WA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #0a0e1a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 40%, rgba(37, 211, 102, 0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 60%, rgba(37, 211, 102, 0.03) 0%, transparent 50%);
+            animation: rotate 60s linear infinite;
+            z-index: 0;
+        }
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            position: relative;
+            z-index: 1;
+        }
+        .login-card {
+            background: rgba(16, 22, 40, 0.92);
+            backdrop-filter: blur(20px);
+            border-radius: 40px;
+            padding: 40px 32px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .login-header .icon {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+            box-shadow: 0 12px 40px rgba(37, 211, 102, 0.2);
+            margin-bottom: 12px;
+        }
+        .login-header h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -0.5px;
+        }
+        .login-header p {
+            color: #8892b0;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            color: #8892b0;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 16px 18px;
+            background: rgba(10, 14, 26, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            color: #e6edff;
+            font-size: 16px;
+            font-weight: 500;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: all 0.3s;
+            outline: none;
+        }
+        .form-group input:focus {
+            border-color: #25D366;
+            box-shadow: 0 0 0 4px rgba(37, 211, 102, 0.08);
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 17px;
+            font-weight: 700;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 8px;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(37, 211, 102, 0.3);
+        }
+        .btn-login:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-msg {
+            color: #ff4444;
+            font-size: 13px;
+            margin-top: 12px;
+            text-align: center;
+            display: none;
+        }
+        .error-msg.show { display: block; animation: shake 0.5s; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #4a5578;
+            font-size: 14px;
+        }
+        .register-link a {
+            color: #25D366;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .register-link a:hover { text-decoration: underline; }
+
+        .demo-info {
+            background: rgba(37, 211, 102, 0.05);
+            border: 1px solid rgba(37, 211, 102, 0.1);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            color: #8892b0;
+            font-size: 13px;
+            text-align: center;
+        }
+        .demo-info strong { color: #25D366; }
+
+        @media (max-width: 480px) {
+            .login-card { padding: 32px 20px; border-radius: 28px; }
+            .login-header h1 { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="icon">
+                    <i class="fab fa-whatsapp"></i>
+                </div>
+                <h1>Tempel WA</h1>
+                <p>Login untuk mulai menghasilkan uang</p>
+            </div>
+
+            <div class="demo-info">
+                <i class="fas fa-info-circle"></i> Demo: <strong>admin</strong> / <strong>admin123</strong>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Username</label>
+                    <input type="text" id="username" placeholder="Masukkan username" value="admin" required>
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-lock"></i> Password</label>
+                    <input type="password" id="password" placeholder="Masukkan password" value="admin123" required>
+                </div>
+
+                <div class="error-msg" id="errorMsg">
+                    <i class="fas fa-exclamation-circle"></i> Login gagal, coba lagi!
+                </div>
+
+                <button type="submit" class="btn-login" id="loginBtn">
+                    <i class="fas fa-arrow-right"></i> Masuk
+                </button>
+            </form>
+
+            <div class="register-link">
+                Belum punya akun? <a href="/register">Daftar di sini</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('loginBtn');
+            const errorMsg = document.getElementById('errorMsg');
+            
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Memproses...';
+            errorMsg.classList.remove('show');
+            
+            try {
+                const resp = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await resp.json();
+                
+                if (data.success) {
+                    window.location.href = data.redirect;
+                } else {
+                    errorMsg.textContent = '❌ ' + data.message;
+                    errorMsg.classList.add('show');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-arrow-right"></i> Masuk';
+                }
+            } catch (e) {
+                errorMsg.textContent = '❌ Error koneksi!';
+                errorMsg.classList.add('show');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-arrow-right"></i> Masuk';
+            }
+        });
+    </script>
+</body>
+</html>

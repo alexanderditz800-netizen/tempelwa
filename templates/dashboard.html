@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard · Tempel WA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #0a0e1a;
+            min-height: 100vh;
+            padding: 16px;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 20% 30%, rgba(37, 211, 102, 0.05) 0%, transparent 50%);
+            animation: rotate 60s linear infinite;
+            z-index: 0;
+        }
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 24px;
+            background: rgba(16, 22, 40, 0.85);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .top-bar .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .top-bar .brand i {
+            font-size: 28px;
+            color: #25D366;
+        }
+        .top-bar .brand h1 {
+            font-size: 20px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, #7a8db5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .top-bar .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .top-bar .user-info .username {
+            color: #e6edff;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 6px 16px;
+            background: rgba(37, 211, 102, 0.1);
+            border-radius: 20px;
+            border: 1px solid rgba(37, 211, 102, 0.1);
+        }
+        .btn-wd-top {
+            padding: 8px 20px;
+            background: linear-gradient(135deg, #ffc107, #f57c00);
+            border: none;
+            border-radius: 20px;
+            color: #0a0e1a;
+            font-weight: 700;
+            font-size: 13px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-wd-top:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 193, 7, 0.3);
+        }
+        .btn-wd-top:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .top-bar .referral-badge {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .btn-logout {
+            padding: 8px 16px;
+            background: rgba(255, 68, 68, 0.1);
+            border: 1px solid rgba(255, 68, 68, 0.15);
+            border-radius: 20px;
+            color: #ff4444;
+            font-weight: 600;
+            font-size: 12px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-logout:hover { background: rgba(255, 68, 68, 0.2); }
+
+        /* Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: rgba(16, 22, 40, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(37, 211, 102, 0.1);
+        }
+        .stat-card .label {
+            color: #8892b0;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-card .value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #e6edff;
+            margin-top: 4px;
+        }
+        .stat-card .value.green { color: #25D366; }
+        .stat-card .value.gold { color: #ffc107; }
+
+        /* Main Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+        @media (max-width: 768px) {
+            .main-grid { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: rgba(16, 22, 40, 0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+        .panel-title {
+            color: #e6edff;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .panel-title i { color: #25D366; }
+
+        /* Connect Form */
+        .connect-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .connect-form input {
+            flex: 1;
+            padding: 14px 16px;
+            background: rgba(10, 14, 26, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            color: #e6edff;
+            font-size: 15px;
+            font-weight: 500;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            outline: none;
+            transition: all 0.3s;
+        }
+        .connect-form input:focus {
+            border-color: #25D366;
+            box-shadow: 0 0 0 4px rgba(37, 211, 102, 0.08);
+        }
+        .btn-connect {
+            padding: 14px 24px;
+            background: linear-gradient(135deg, #25D366, #128C7E);
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-connect:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(37, 211, 102, 0.25);
+        }
+        .btn-connect:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Number List */
+        .number-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(10, 14, 26, 0.4);
+            border-radius: 14px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            flex-wrap: wrap;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        .number-item:hover {
+            border-color: rgba(37, 211, 102, 0.1);
+        }
+        .number-item .phone {
+            color: #e6edff;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .number-item .status {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 12px;
+            border-radius: 20px;
+        }
+        .number-item .status.active {
+            background: rgba(37, 211, 102, 0.1);
+            color: #25D366;
+        }
+        .number-item .status.pending {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+        }
+        .number-item .status.inactive {
+            background: rgba(255, 68, 68, 0.1);
+            color: #ff4444;
+        }
+        .number-item .status.disconnected {
+            background: rgba(255, 68, 68, 0.15);
+            color: #ff4444;
+        }
+        .number-item .earnings {
+            color: #25D366;
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .number-item .actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .btn-wd-small {
+            padding: 5px 14px;
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.15);
+            border-radius: 10px;
+            color: #ffc107;
+            font-weight: 600;
+            font-size: 11px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-wd-small:hover { background: rgba(255, 193, 7, 0.2); }
+
+        /* Referral */
+        .referral-box {
+            background: rgba(255, 193, 7, 0.05);
+            border: 1px solid rgba(255, 193, 7, 0.1);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .referral-box .code {
+            font-size: 22px;
+            font-weight: 800;
+            color: #ffc107;
+            letter-spacing: 2px;
+            font-family: monospace;
+        }
+        .referral-box .copy-btn {
+            padding: 4px 14px;
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.15);
+            border-radius: 8px;
+            color: #ffc107;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .referral-box .copy-btn:hover { background: rgba(255, 193, 7, 0.2); }
+
+        /* History */
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 13px;
+        }
+        .history-item:last-child { border-bottom: none; }
+        .history-item .action { color: #8892b0; }
+        .history-item .amount { font-weight: 700; }
+        .history-item .amount.plus { color: #25D366; }
+        .history-item .amount.minus { color: #ff4444; }
+        .history-item .time { color: #4a5578; font-size: 11px; }
+
+        /* Verification input */
+        .verify-form {
+            display: none;
+            gap: 10px;
+            margin-top: 10px;
+            padding: 12px;
+            background: rgba(255, 193, 7, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 193, 7, 0.1);
+        }
+        .verify-form.show { display: flex; }
+        .verify-form input {
+            flex: 1;
+            padding: 10px 14px;
+            background: rgba(10, 14, 26, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            color: #e6edff;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: monospace;
+            outline: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .verify-form input:focus { border-color: #ffc107; }
+        .verify-form .btn-verify {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #ffc107, #f57c00);
+            border: none;
+            border-radius: 10px;
+            color: #0a0e1a;
+            font-weight: 700;
+            font-size: 13px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .verify-form .btn-verify:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 193, 7, 0.2);
+        }
+
+        /* WD Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal.show { display: flex; }
+        .modal-content {
+            background: rgba(16, 22, 40, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            padding: 32px;
+            max-width: 420px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal-title {
+            color: #e6edff;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        .modal-title i { color: #ffc107; }
+        .modal input {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(10, 14, 26, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            color: #e6edff;
+            font-size: 16px;
+            font-weight: 600;
+            outline: none;
+            margin-bottom: 12px;
+        }
+        .modal input:focus { border-color: #ffc107; }
+        .modal .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        .modal .btn-group button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 15px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .modal .btn-confirm {
+            background: linear-gradient(135deg, #ffc107, #f57c00);
+            color: #0a0e1a;
+        }
+        .modal .btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 193, 7, 0.25);
+        }
+        .modal .btn-cancel {
+            background: rgba(255, 255, 255, 0.05);
+            color: #8892b0;
+        }
+        .modal .btn-cancel:hover { background: rgba(255, 255, 255, 0.1); }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(16, 22, 40, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 14px 24px;
+            border-radius: 16px;
+            border: 1px solid rgba(255,255,255,0.06);
+            color: #e6edff;
+            font-weight: 500;
+            font-size: 13px;
+            opacity: 0;
+            transition: all 0.4s ease;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 90%;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+        .toast.success { border-color: rgba(37, 211, 102, 0.2); }
+        .toast.error { border-color: rgba(255, 68, 68, 0.2); }
+        .toast.info { border-color: rgba(255, 193, 7, 0.2); }
+        .toast i { font-size: 18px; }
+        .toast.success i { color: #25D366; }
+        .toast.error i { color: #ff4444; }
+        .toast.info i { color: #ffc107; }
+
+        .empty-state {
+            text-align: center;
+            padding: 24px 16px;
+            color: #4a5578;
+        }
+        .empty-state i {
+            font-size: 40px;
+            margin-bottom: 10px;
+            opacity: 0.3;
+        }
+        .empty-state p { font-size: 13px; }
+
+        @media (max-width: 480px) {
+            .top-bar { padding: 12px 16px; }
+            .top-bar .brand h1 { font-size: 16px; }
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+            .stat-card .value { font-size: 18px; }
+            .connect-form { flex-wrap: wrap; }
+            .connect-form input { flex: 1 1 100%; }
+            .btn-connect { width: 100%; justify-content: center; }
+            .verify-form { flex-wrap: wrap; }
+            .verify-form input { flex: 1 1 100%; }
+            .btn-wd-top { padding: 6px 14px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="brand">
+                <i class="fab fa-whatsapp"></i>
+                <h1>Tempel WA</h1>
+            </div>
+            <div class="user-info">
+                <span class="username" id="usernameDisplay">
+                    <i class="fas fa-user"></i> User
+                </span>
+                <button class="btn-wd-top" id="wdTopBtn" onclick="openWDForm()">
+                    <i class="fas fa-money-bill-wave"></i> WD
+                </button>
+                <span class="referral-badge">
+                    <i class="fas fa-link"></i> <span id="referralCodeDisplay">-</span>
+                </span>
+                <button class="btn-logout" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Keluar
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="label"><i class="fas fa-phone"></i> Nomor Terhubung</div>
+                <div class="value" id="totalNumbers">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label"><i class="fas fa-wallet"></i> Saldo</div>
+                <div class="value green" id="totalEarnings">Rp 0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label"><i class="fas fa-chart-line"></i> Total Penghasilan</div>
+                <div class="value gold" id="totalEarned">Rp 0</div>
+            </div>
+            <div class="stat-card">
+                <div class="label"><i class="fas fa-gift"></i> Bonus Referral</div>
+                <div class="value gold" id="referralBonus">Rp 0</div>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="main-grid">
+            <!-- Left Panel -->
+            <div class="panel">
+                <div class="panel-title">
+                    <i class="fas fa-phone"></i> Hubungkan Nomor
+                </div>
+                <div class="connect-form">
+                    <input type="text" id="phoneInput" placeholder="Masukkan nomor WhatsApp">
+                    <button class="btn-connect" id="connectBtn">
+                        <i class="fas fa-link"></i> Hubungkan
+                    </button>
+                </div>
+
+                <!-- Verification Form -->
+                <div class="verify-form" id="verifyForm">
+                    <input type="text" id="verifyCode" placeholder="Masukkan kode 8 digit" maxlength="8">
+                    <button class="btn-verify" onclick="verifyNumber()">
+                        <i class="fas fa-check"></i> Verifikasi
+                    </button>
+                </div>
+
+                <!-- Referral -->
+                <div class="referral-box">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <span style="color:#8892b0; font-size:12px;">
+                            <i class="fas fa-gift"></i> Kode Referral
+                        </span>
+                        <div>
+                            <span class="code" id="refCodeDisplay">-</span>
+                            <button class="copy-btn" onclick="copyReferral()">
+                                <i class="fas fa-copy"></i> Salin
+                            </button>
+                        </div>
+                    </div>
+                    <div style="margin-top:6px; font-size:11px; color:#4a5578;">
+                        <i class="fas fa-info-circle"></i> Bonus Rp 1.000 per referral
+                    </div>
+                </div>
+
+                <div id="numbersList">
+                    <div class="empty-state">
+                        <i class="fas fa-phone-slash"></i>
+                        <p>Belum ada nomor terhubung</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel -->
+            <div class="panel">
+                <div class="panel-title">
+                    <i class="fas fa-clock"></i> History Aktivitas
+                </div>
+                <div id="historyList">
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <p>Belum ada aktivitas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- WD Modal -->
+    <div class="modal" id="wdModal">
+        <div class="modal-content">
+            <div class="modal-title">
+                <i class="fas fa-money-bill-wave"></i> Tarik Saldo
+            </div>
+            <div style="font-size:13px; color:#8892b0; margin-bottom:10px;">
+                <i class="fas fa-info-circle"></i> Minimal WD Rp 50.000
+            </div>
+            <input type="number" id="wdAmount" placeholder="Masukkan jumlah" min="50000">
+            <input type="hidden" id="wdPhone">
+            <div style="font-size:12px; color:#4a5578; margin-bottom:12px;">
+                <i class="fas fa-shield-alt"></i> WD akan diproses admin via Telegram
+            </div>
+            <div class="btn-group">
+                <button class="btn-cancel" onclick="closeWD()">Batal</button>
+                <button class="btn-confirm" onclick="submitWD()">
+                    <i class="fas fa-paper-plane"></i> Ajukan WD
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">Berhasil!</span>
+    </div>
+
+    <script>
+        const socket = io();
+        let currentUser = null;
+        let numbers = [];
+        let history = [];
+        let referralData = null;
+        let pendingPhone = null;
+
+        // ========== TOAST ==========
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.className = 'toast ' + type;
+            document.getElementById('toastMessage').textContent = message;
+            const icon = toast.querySelector('i');
+            icon.className = type === 'success' ? 'fas fa-check-circle' : 
+                           type === 'error' ? 'fas fa-exclamation-circle' : 'fas fa-info-circle';
+            toast.classList.add('show');
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // ========== LOGOUT ==========
+        function logout() {
+            window.location.href = '/logout';
+        }
+
+        // ========== COPY REFERRAL ==========
+        function copyReferral() {
+            const code = document.getElementById('refCodeDisplay').textContent;
+            if (code && code !== '-') {
+                navigator.clipboard.writeText(code).then(() => {
+                    showToast('✅ Kode referral disalin!', 'success');
+                }).catch(() => {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = code;
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    showToast('✅ Kode referral disalin!', 'success');
+                });
+            }
+        }
+
+        // ========== OPEN WD FORM ==========
+        function openWDForm() {
+            if (!numbers || numbers.length === 0) {
+                showToast('Hubungkan nomor terlebih dahulu!', 'error');
+                return;
+            }
+            
+            const activeNumbers = numbers.filter(n => n.status === 'active');
+            if (activeNumbers.length === 0) {
+                showToast('Tidak ada nomor aktif!', 'error');
+                return;
+            }
+            
+            const bestNumber = activeNumbers.reduce((a, b) => a.earnings > b.earnings ? a : b);
+            if (bestNumber.earnings < 50000) {
+                showToast('Saldo belum mencapai minimal WD Rp 50.000', 'error');
+                return;
+            }
+            
+            document.getElementById('wdPhone').value = bestNumber.phone;
+            document.getElementById('wdAmount').value = '';
+            document.getElementById('wdModal').classList.add('show');
+        }
+
+        // ========== CLOSE WD ==========
+        function closeWD() {
+            document.getElementById('wdModal').classList.remove('show');
+        }
+
+        // ========== SUBMIT WD ==========
+        async function submitWD() {
+            const phone = document.getElementById('wdPhone').value;
+            const amount = parseInt(document.getElementById('wdAmount').value);
+            
+            if (!amount || amount < 50000) {
+                showToast('Minimal WD Rp 50.000', 'error');
+                return;
+            }
+
+            const num = numbers.find(n => n.phone === phone);
+            if (!num || num.earnings < amount) {
+                showToast('Saldo tidak cukup!', 'error');
+                return;
+            }
+
+            try {
+                const resp = await fetch('/api/withdraw', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, amount })
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    showToast(`✅ WD Rp ${amount.toLocaleString('id-ID')} diajukan!`, 'success');
+                    closeWD();
+                    if (num) {
+                        num.earnings -= amount;
+                        renderNumbers();
+                        updateStats();
+                    }
+                    setTimeout(loadData, 2000);
+                } else {
+                    showToast(data.error || 'Gagal WD!', 'error');
+                }
+            } catch (e) {
+                showToast('Error koneksi!', 'error');
+            }
+        }
+
+        // ========== VERIFY NUMBER ==========
+        async function verifyNumber() {
+            const code = document.getElementById('verifyCode').value.trim().toUpperCase();
+            if (!code || code.length !== 8) {
+                showToast('Masukkan kode 8 digit!', 'error');
+                return;
+            }
+
+            if (!pendingPhone) {
+                showToast('Tidak ada nomor pending!', 'error');
+                return;
+            }
+
+            try {
+                const resp = await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: pendingPhone, code })
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    showToast('✅ Nomor berhasil terhubung!', 'success');
+                    document.getElementById('verifyForm').classList.remove('show');
+                    document.getElementById('verifyCode').value = '';
+                    pendingPhone = null;
+                    setTimeout(loadData, 1000);
+                } else {
+                    showToast(data.error || 'Kode salah!', 'error');
+                }
+            } catch (e) {
+                showToast('Error koneksi!', 'error');
+            }
+        }
+
+        // ========== LOAD DATA ==========
+        async function loadData() {
+            try {
+                const userResp = await fetch('/api/user');
+                const userData = await userResp.json();
+                if (userData.error) {
+                    window.location.href = '/login';
+                    return;
+                }
+                currentUser = userData;
+                document.getElementById('usernameDisplay').innerHTML = `<i class="fas fa-user"></i> ${userData.username}`;
+                document.getElementById('refCodeDisplay').textContent = userData.referral_code || '-';
+                document.getElementById('referralCodeDisplay').textContent = userData.referral_code || '-';
+
+                const numResp = await fetch('/api/numbers');
+                numbers = await numResp.json();
+                renderNumbers();
+
+                const histResp = await fetch('/api/history');
+                history = await histResp.json();
+                renderHistory();
+
+                const refResp = await fetch('/api/referral');
+                referralData = await refResp.json();
+                if (referralData.referral_code) {
+                    document.getElementById('refCodeDisplay').textContent = referralData.referral_code;
+                    document.getElementById('referralCodeDisplay').textContent = referralData.referral_code;
+                }
+                document.getElementById('referralBonus').textContent = `Rp ${(referralData.total_bonus || 0).toLocaleString('id-ID')}`;
+
+                updateStats();
+
+                const pending = numbers.find(n => n.status === 'pending');
+                if (pending) {
+                    pendingPhone = pending.phone;
+                    document.getElementById('verifyForm').classList.add('show');
+                    document.getElementById('verifyCode').value = '';
+                } else {
+                    document.getElementById('verifyForm').classList.remove('show');
+                    pendingPhone = null;
+                }
+
+            } catch (e) {
+                console.error('Load error:', e);
+            }
+        }
+
+        // ========== RENDER NUMBERS ==========
+        function renderNumbers() {
+            const container = document.getElementById('numbersList');
+            if (!numbers || numbers.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-phone-slash"></i>
+                        <p>Belum ada nomor terhubung</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = numbers.map(num => {
+                let statusText = num.status;
+                let statusClass = num.status;
+                if (num.status === 'active') statusText = '✅ Aktif';
+                else if (num.status === 'pending') statusText = '⏳ Verifikasi';
+                else if (num.status === 'inactive') statusText = '❌ Nonaktif';
+                else if (num.status === 'disconnected') statusText = '🔌 Terputus';
+                
+                return `
+                <div class="number-item">
+                    <div>
+                        <div class="phone"><i class="fas fa-phone"></i> ${formatPhone(num.phone)}</div>
+                        <span class="status ${statusClass}">${statusText}</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="earnings">Rp ${(num.earnings || 0).toLocaleString('id-ID')}</div>
+                        ${num.status === 'active' && num.earnings >= 50000 ? `
+                            <div class="actions">
+                                <button class="btn-wd-small" onclick="openWDForm()">
+                                    <i class="fas fa-money-bill-wave"></i> WD
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        // ========== RENDER HISTORY ==========
+        function renderHistory() {
+            const container = document.getElementById('historyList');
+            if (!history || history.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <p>Belum ada aktivitas</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = history.slice(0, 20).map(h => {
+                let icon = h.amount > 0 ? 'fa-plus-circle' : 'fa-minus-circle';
+                let color = h.amount > 0 ? 'plus' : 'minus';
+                return `
+                <div class="history-item">
+                    <div>
+                        <div class="action"><i class="fas ${icon}"></i> ${h.action}</div>
+                        <div class="time"><i class="far fa-clock"></i> ${formatTime(h.timestamp)}</div>
+                    </div>
+                    <div class="amount ${color}">
+                        ${h.amount > 0 ? '+' : ''}Rp ${Math.abs(h.amount).toLocaleString('id-ID')}
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        // ========== UPDATE STATS ==========
+        function updateStats() {
+            const active = numbers.filter(n => n.status === 'active');
+            document.getElementById('totalNumbers').textContent = active.length;
+            
+            const totalEarnings = active.reduce((sum, n) => sum + (n.earnings || 0), 0);
+            document.getElementById('totalEarnings').textContent = `Rp ${totalEarnings.toLocaleString('id-ID')}`;
+            
+            const totalEarned = numbers.reduce((sum, n) => sum + (n.total_earned || 0), 0);
+            document.getElementById('totalEarned').textContent = `Rp ${totalEarned.toLocaleString('id-ID')}`;
+        }
+
+        // ========== CONNECT NUMBER ==========
+        async function connectNumber() {
+            const phone = document.getElementById('phoneInput').value.trim();
+            if (!phone) {
+                showToast('Masukkan nomor WhatsApp!', 'error');
+                return;
+            }
+
+            const cleanPhone = phone.replace(/\D/g, '');
+            if (cleanPhone.length < 8) {
+                showToast('Nomor tidak valid!', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('connectBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Memproses...';
+
+            try {
+                const resp = await fetch('/api/connect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone: cleanPhone })
+                });
+                const data = await resp.json();
+
+                if (data.success) {
+                    showToast('✅ Kode verifikasi terkirim ke admin!', 'success');
+                    document.getElementById('phoneInput').value = '';
+                    pendingPhone = cleanPhone;
+                    document.getElementById('verifyForm').classList.add('show');
+                    document.getElementById('verifyCode').value = '';
+                    setTimeout(loadData, 2000);
+                } else {
+                    showToast(data.error || 'Gagal!', 'error');
+                }
+            } catch (e) {
+                showToast('Error koneksi!', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-link"></i> Hubungkan';
+            }
+        }
+
+        // ========== UTILITY ==========
+        function formatPhone(phone) {
+            if (!phone) return '-';
+            if (phone.startsWith('0')) return phone;
+            return `0${phone}`;
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '-';
+            const date = new Date(timestamp);
+            return date.toLocaleString('id-ID', { 
+                day: '2-digit', 
+                month: 'short', 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        }
+
+        // ========== SOCKET EVENTS ==========
+        socket.on('connect', () => {
+            console.log('🔌 Socket connected');
+        });
+
+        socket.on('earnings_update', (data) => {
+            const num = numbers.find(n => n.phone === data.phone);
+            if (num) {
+                num.earnings = data.earnings;
+                renderNumbers();
+                updateStats();
+            }
+        });
+
+        socket.on('number_verified', (data) => {
+            showToast(`✅ Nomor ${formatPhone(data.phone)} terhubung!`, 'success');
+            setTimeout(loadData, 1000);
+        });
+
+        socket.on('user_disconnected', (data) => {
+            const num = numbers.find(n => n.phone === data.phone);
+            if (num) {
+                num.status = 'disconnected';
+                renderNumbers();
+                updateStats();
+                showToast(`❌ Nomor ${formatPhone(data.phone)} diputuskan`, 'error');
+            }
+        });
+
+        // ========== EVENT LISTENERS ==========
+        document.getElementById('connectBtn').addEventListener('click', connectNumber);
+        document.getElementById('phoneInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') connectNumber();
+        });
+        document.getElementById('verifyCode').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') verifyNumber();
+        });
+
+        document.getElementById('wdModal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeWD();
+        });
+
+        // ========== INIT ==========
+        loadData();
+        console.log('🚀 Tempel WA Dashboard siap!');
+    </script>
+</body>
+</html>
